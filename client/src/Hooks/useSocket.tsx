@@ -25,7 +25,7 @@ export default function useSocket() {
 
     const initSocket = (password: string, isDriver: boolean) => {
         setIsWaiting(true)
-        socket = io('http://localhost:3010', {
+        socket = io('http://20.121.66.225:3010', {
             extraHeaders: {
                 password: password,
                 isDriver: isDriver ? "driver" : "control"
