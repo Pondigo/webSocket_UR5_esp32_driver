@@ -1,5 +1,4 @@
 import React, { useState, createRef, useRef, LegacyRef, useEffect } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import BootstrapSwitchButton, { ColorsOutline, Colors } from 'bootstrap-switch-button-react'
 
@@ -69,7 +68,7 @@ function App() {
     }
   }
 
-  const { initSocket, isWaiting, isReady, driverList, sessionID, driverSelected, setDriverSelected, status, setStatusVal } = useSocket()
+  const { initSocket, isWaiting, isReady, driverList, sessionID, driverSelected, setDriverSelected, status, setStatusVal, metalicStatus, setMetalicStatus, noMetalicStatus, setNoMetalicStatus } = useSocket()
 
   const [isDriver, setIsDriver] = useState(false)
 
