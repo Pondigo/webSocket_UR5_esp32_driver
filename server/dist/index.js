@@ -38,11 +38,19 @@ const passwordServer = "UR5_CTITO";
 class driverInstance {
     constructor(id) {
         this.onState = false;
+        this.metalicState = false;
+        this.noMetalicState = false;
         this.subscriptors = [];
         this.id = id;
     }
     setOnState(value) {
         this.onState = value;
+    }
+    setMetalicState(value) {
+        this.metalicState = value;
+    }
+    setNoMetalicState(value) {
+        this.noMetalicState = value;
     }
     getData() {
         return {
@@ -93,7 +101,9 @@ const printAJSON = (jsonObj) => {
 };
 io.on("connection", (socket) => {
     console.log("Connection");
-    if (socket.handshake.headers.password !== passwordServer) {
+    if (socket.handshake.headers["user-agent"] === "arduino-WebSocket-Client")
+        console.log("Arduino connected");
+    if (socket.handshake.headers.password !== passwordServer && socket.handshake.headers["user-agent"] !== "arduino-WebSocket-Client") {
         socket.disconnect();
         console.log("Socket disconnect by wrong password");
         printAJSON(socket.handshake);
@@ -101,7 +111,7 @@ io.on("connection", (socket) => {
         return;
     }
     else {
-        if (socket.handshake.headers.isdriver === "driver") {
+        if (socket.handshake.headers.isdriver === "driver" || socket.handshake.headers["user-agent"] === "arduino-WebSocket-Client") {
             // Add to driver list
             console.log("newDriver");
             const currentDriverInstance = new driverInstance(socket.id);
@@ -130,11 +140,11 @@ io.on("connection", (socket) => {
             return;
         driverArray[driverID].addSubscriptor(socket.id);
         console.log("added subscriptor");
-        socket.emit("driverConnected", driverArray[driverID].onState);
+        socket.emit("driverConnected", driverArray[driverID].onState, driverArray[driverID].metalicState, driverArray[driverID].noMetalicState);
         console.log("emit");
     });
     socket.on("disconnect", () => {
-        if (socket.handshake.headers.isdriver === "driver") {
+        if (socket.handshake.headers.isdriver === "driver" || socket.handshake.headers["user-agent"] === "arduino-WebSocket-Client") {
             console.log("Has been disconnected the driver with the id: " + socket.id);
             driverArray = driverArray.filter((value) => {
                 return value.id !== socket.id;
@@ -164,6 +174,38 @@ io.on("connection", (socket) => {
             if (subscriptorID !== socket.id) {
                 console.log(subscriptorID);
                 io.to(subscriptorID).emit("updateState", onState);
+            }
+        }
+    });
+    socket.on("setMetalicStatusVal", (onState, identifier) => {
+        const driverID = getDriverArrayIndex(identifier);
+        console.log("Index array: " + driverID);
+        if (driverID === -1)
+            return;
+        driverArray[driverID].setMetalicState(onState);
+        console.log(`Set metalic state: ${onState} to the driver: ${driverArray[driverID].id}`);
+        io.to(driverArray[driverID].id).emit("updateMetalicState", onState);
+        for (let i = 0; i < driverArray[driverID].subscriptors.length; i++) {
+            const subscriptorID = driverArray[driverID].subscriptors[i];
+            if (subscriptorID !== socket.id) {
+                console.log(subscriptorID);
+                io.to(subscriptorID).emit("updateMetalicState", onState);
+            }
+        }
+    });
+    socket.on("setNoMetalicStatusVal", (onState, identifier) => {
+        const driverID = getDriverArrayIndex(identifier);
+        console.log("Index array: " + driverID);
+        if (driverID === -1)
+            return;
+        driverArray[driverID].setNoMetalicState(onState);
+        console.log(`Set no metalic state: ${onState} to the driver: ${driverArray[driverID].id}`);
+        io.to(driverArray[driverID].id).emit("updateNonMetalicState", onState);
+        for (let i = 0; i < driverArray[driverID].subscriptors.length; i++) {
+            const subscriptorID = driverArray[driverID].subscriptors[i];
+            if (subscriptorID !== socket.id) {
+                console.log(subscriptorID);
+                io.to(subscriptorID).emit("updateNonMetalicState", onState);
             }
         }
     });

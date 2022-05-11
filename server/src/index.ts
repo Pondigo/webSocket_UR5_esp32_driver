@@ -7,8 +7,11 @@ interface ServerToClientEvents {
     basicEmit: (a: number, b: string, c: Buffer) => void;
     acceptConnection: (socketID: string, driverArray?: string[]) => void;
     newDrivers: (driverArray: string[]) => void;
-    driverConnected: (onState: boolean) => void;
+    driverConnected: (onState: boolean, metalicState: boolean, noMetalicState: boolean) => void;
     updateState: (newState: boolean) => void;
+    updateMetalicState: (newState: boolean) => void;
+    updateNonMetalicState: (newState: boolean) => void;
+
 
 }
 
@@ -18,7 +21,8 @@ interface ClientToServerEvents {
     setName: (name: string) => void;
     connectToDriver: (identifier: string) => void;
     setValueOnStatus: (onState: boolean, identifier: string) => void;
-
+    setMetalicStatusVal: (onState: boolean, identifier: string) => void;
+    setNoMetalicStatusVal: (onState: boolean, identifier: string) => void;
 
 }
 
@@ -43,6 +47,8 @@ const passwordServer = "UR5_CTITO"
 class driverInstance {
     name: string | undefined;
     onState: boolean = false;
+    metalicState: boolean = false;
+    noMetalicState: boolean = false;
     id: string;
     subscriptors: string[] = []
 
@@ -52,6 +58,14 @@ class driverInstance {
 
     public setOnState(value: boolean) {
         this.onState = value;
+    }
+
+    public setMetalicState(value: boolean) {
+        this.metalicState = value;
+    }
+
+    public setNoMetalicState(value: boolean) {
+        this.noMetalicState = value;
     }
 
     public getData(): {
@@ -120,9 +134,10 @@ const printAJSON = (jsonObj: any) => {
 
 io.on("connection", (socket) => {
     console.log("Connection")
+    if (socket.handshake.headers["user-agent"] === "arduino-WebSocket-Client") console.log("Arduino connected")
 
 
-    if (socket.handshake.headers.password !== passwordServer) {
+    if (socket.handshake.headers.password !== passwordServer && socket.handshake.headers["user-agent"] !== "arduino-WebSocket-Client") {
         socket.disconnect()
         console.log("Socket disconnect by wrong password")
         printAJSON(socket.handshake)
@@ -130,7 +145,7 @@ io.on("connection", (socket) => {
 
         return
     } else {
-        if (socket.handshake.headers.isdriver === "driver") {
+        if (socket.handshake.headers.isdriver === "driver" || socket.handshake.headers["user-agent"] === "arduino-WebSocket-Client") {
             // Add to driver list
             console.log("newDriver")
             const currentDriverInstance = new driverInstance(socket.id)
@@ -162,14 +177,14 @@ io.on("connection", (socket) => {
         if (driverID === -1) return
         driverArray[driverID].addSubscriptor(socket.id)
         console.log("added subscriptor")
-        socket.emit("driverConnected", driverArray[driverID].onState)
+        socket.emit("driverConnected", driverArray[driverID].onState, driverArray[driverID].metalicState, driverArray[driverID].noMetalicState)
         console.log("emit")
     })
 
 
 
     socket.on("disconnect", () => {
-        if (socket.handshake.headers.isdriver === "driver") {
+        if (socket.handshake.headers.isdriver === "driver" || socket.handshake.headers["user-agent"] === "arduino-WebSocket-Client") {
             console.log("Has been disconnected the driver with the id: " + socket.id)
             driverArray = driverArray.filter((value: driverInstance) => {
                 return value.id !== socket.id
@@ -204,6 +219,50 @@ io.on("connection", (socket) => {
                 io.to(subscriptorID).emit("updateState", onState)
             }
 
+
+        }
+
+
+    })
+    socket.on("setMetalicStatusVal", (onState: boolean, identifier: string) => {
+        const driverID = getDriverArrayIndex(identifier);
+        console.log("Index array: " + driverID)
+        if (driverID === -1) return
+        driverArray[driverID].setMetalicState(onState)
+
+        console.log(`Set metalic state: ${onState} to the driver: ${driverArray[driverID].id}`)
+
+        io.to(driverArray[driverID].id).emit("updateMetalicState", onState)
+
+        for (let i = 0; i < driverArray[driverID].subscriptors.length; i++) {
+
+            const subscriptorID = driverArray[driverID].subscriptors[i];
+            if (subscriptorID !== socket.id) {
+                console.log(subscriptorID)
+                io.to(subscriptorID).emit("updateMetalicState", onState)
+            }
+
+        }
+
+
+    })
+    socket.on("setNoMetalicStatusVal", (onState: boolean, identifier: string) => {
+        const driverID = getDriverArrayIndex(identifier);
+        console.log("Index array: " + driverID)
+        if (driverID === -1) return
+        driverArray[driverID].setNoMetalicState(onState)
+
+        console.log(`Set no metalic state: ${onState} to the driver: ${driverArray[driverID].id}`)
+
+        io.to(driverArray[driverID].id).emit("updateNonMetalicState", onState)
+
+        for (let i = 0; i < driverArray[driverID].subscriptors.length; i++) {
+
+            const subscriptorID = driverArray[driverID].subscriptors[i];
+            if (subscriptorID !== socket.id) {
+                console.log(subscriptorID)
+                io.to(subscriptorID).emit("updateNonMetalicState", onState)
+            }
 
         }
 
