@@ -5,6 +5,7 @@ import BootstrapSwitchButton, { ColorsOutline, Colors } from 'bootstrap-switch-b
 import { Button, Container, Form, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import styled from 'styled-components';
 import useSocket from './Hooks/useSocket';
+import ControlStatus from './ControlStatus';
 
 interface BootstrapSwitchButtonProps {
   /**
@@ -54,21 +55,10 @@ display:content;
 function App() {
 
 
-  const switchStatusRef: LegacyRef<BootstrapSwitchButton> = createRef<BootstrapSwitchButton>()
 
-  const setSwitchStatusRef = (newOnStatus: boolean) => {
-    console.log("update to " + newOnStatus)
-    console.log(switchStatusRef.current)
-    if (switchStatusRef.current) {
-      console.log("enter")
-      switchStatusRef.current.setState({
-        checked: newOnStatus
-      })
 
-    }
-  }
 
-  const { initSocket, isWaiting, isReady, driverList, sessionID, driverSelected, setDriverSelected, status, setStatusVal, metalicStatus, setMetalicStatus, noMetalicStatus, setNoMetalicStatus } = useSocket()
+  const { initSocket, isWaiting, isReady, driverList, sessionID, driverSelected, setDriverSelected, status, setStatusVal, metalicStatus, setMetalicStatusVal, noMetalicStatus, setNoMetalicStatusVal } = useSocket()
 
   const [isDriver, setIsDriver] = useState(false)
 
@@ -187,74 +177,20 @@ function App() {
     )
   }
 
-  const ControlStatus = () => {
-
-    const switchOnState = () => {
-
-      if (!switchStatusRef.current) return
-      const switchStateValue: BootstrapSwitchButtonProps = switchStatusRef.current.state
-
-      setStatusVal(switchStateValue.checked !== undefined ? !switchStateValue.checked : false)
-    }
-
-    const handleClickOnSSB = (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
-      switchOnState()
-    }
-    /* 
-        useEffect(() => {
-          const setSwitchStatusRef = (newOnStatus: boolean) => {
-            console.log("hereeee")
-            console.log("update to " + newOnStatus)
-            console.log(switchStatusRef.current)
-            if (switchStatusRef.current) {
-              console.log("enter")
-              switchStatusRef.current.setState({
-                checked: newOnStatus
-              })
-    
-            }
-          }
-    
-          setSetSwitchStatusRef(setSwitchStatusRef)
-    
-        }, []) */
 
 
 
-
-    return (
-      <>
-        <p>Enciende o apaga el proceso</p>
-        <SwitchWrapper onClick={handleClickOnSSB}>
-          <BootstrapSwitchButton
-            checked={status}
-            key={"onStateSwitchButton"}
-            ref={switchStatusRef}
-            onstyle="outline-success"
-            offstyle="outline-danger"
-            onlabel='On'
-            offlabel='Off'
-          />
-        </SwitchWrapper>
-        <br />
-
-      </>
-
-    )
-  }
 
   const ControlView = () => {
     return (
       <AppMainWrapper>
         <DriverDropdown />
         <br />
-        {status !== undefined ? <ControlStatus /> : null}
+        {status !== undefined ? <ControlStatus statusVal={status} setVal={setStatusVal} mainLabel={"Enciende o apaga el proceso"} onLabel={"On"} offLabel={"Off"} /> : null}
+        {metalicStatus !== undefined ? <ControlStatus statusVal={metalicStatus} setVal={setMetalicStatusVal} mainLabel={"Contenido metalico:"} onLabel={"2"} offLabel={"1"} /> : null}
+        {noMetalicStatus !== undefined ? <ControlStatus statusVal={noMetalicStatus} setVal={setNoMetalicStatusVal} mainLabel={"Contenido no metalico:"} onLabel={"2"} offLabel={"1"} /> : null}
         <br />
         <br />
-
-
-
-
       </AppMainWrapper>
     )
   }
@@ -266,6 +202,8 @@ function App() {
       <AppMainWrapper>
         <p>Session ID: {sessionID}</p>
         <p>{status ? "On" : "Off"}</p>
+        <p>{metalicStatus ? "2" : "1"}</p>
+        <p>{noMetalicStatus ? "2" : "1"}</p>
       </AppMainWrapper>
     )
   }

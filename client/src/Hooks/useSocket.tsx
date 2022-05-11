@@ -50,10 +50,13 @@ export default function useSocket() {
             setDriverList(driverArray)
         })
 
-        socket.on("driverConnected", (onState: boolean) => {
+        socket.on("driverConnected", (onState: boolean, metalicState: boolean, noMetalicState: boolean) => {
             setStatus(onState)
-            console.log("enter?")
+            setMetalicStatus(metalicState)
+            setNoMetalicStatus(noMetalicState)
             console.log("onstate: " + onState)
+            console.log("metalicState: " + metalicState)
+            console.log("noMetalicState: " + noMetalicState)
         })
 
         socket.on("updateState", (newState: boolean) => {
@@ -89,7 +92,7 @@ export default function useSocket() {
         if (!socketState) return
         console.log("Socket aviable")
         setMetalicStatus(newOnStatus)
-        socketState.emit("setValueMetalicStatus", newOnStatus, driverSelected)
+        socketState.emit("setMetalicStatusVal", newOnStatus, driverSelected)
     }
 
     const setNoMetalicStatusVal = (newOnStatus: boolean) => {
@@ -97,7 +100,7 @@ export default function useSocket() {
         if (!socketState) return
         console.log("Socket aviable")
         setNoMetalicStatus(newOnStatus)
-        socketState.emit("setValueNoMetalicStatus", newOnStatus, driverSelected)
+        socketState.emit("setNoMetalicStatusVal", newOnStatus, driverSelected)
     }
 
 
@@ -106,7 +109,7 @@ export default function useSocket() {
 
 
     return {
-        initSocket, isWaiting, isReady, driverList, sessionID, driverSelected, setDriverSelected, status, setStatusVal, metalicStatus, setMetalicStatus, noMetalicStatus, setNoMetalicStatus
+        initSocket, isWaiting, isReady, driverList, sessionID, driverSelected, setDriverSelected, status, setStatusVal, metalicStatus, setMetalicStatusVal, noMetalicStatus, setNoMetalicStatusVal
     }
 
 
