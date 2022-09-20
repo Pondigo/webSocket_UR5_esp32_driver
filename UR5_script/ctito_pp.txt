@@ -1,0 +1,57 @@
+ Program
+   Robot Program
+     MoveJ
+       Punto_de_paso_1
+       'Missing: Gripper'
+       If cont_process≟3
+         Popup: The output cups is over.
+         cont_process≔0
+       If digital_in[0]
+         Popup: Has been detected a cup
+         Punto_de_paso_2
+         'Missing: Gripper'
+         Call Go_to_sf
+         If (digital_in[1] and digital_in[2]) or ( not digital_in[1] and digital_in[3])
+           Call Drop_on_1
+         Else
+           Call Drop_on_2
+         'Punto_de_pas_11'
+         'Punto_de_pas_10'
+         'Missing: Gripper'
+         'Punto_de_pas_12'
+         Switch cont_process
+           Case 0
+             Call Save_on_1
+           Case 1
+             Call Save_on_2
+           Case 2
+             Call Save_on_3
+         Set cont_process=cont_process+1
+   Go_to_sf
+     MoveJ
+       Punto_de_paso_4
+       Punto_de_paso_3
+       Punto_de_paso_5
+   Drop_on_1
+     MoveJ
+       Punto_de_paso_6
+       Punto_de_paso_7
+   Drop_on_2
+     MoveJ
+       Punto_de_paso_8
+       Punto_de_paso_9
+   Save_on_1
+     MoveJ
+       Punto_de_pas_11
+       Punto_de_pas_10
+       Punto_de_pas_12
+   Save_on_2
+     MoveJ
+       Punto_de_pas_11
+       Punto_de_pas_10
+       Punto_de_pas_12
+   Save_on_3
+     MoveJ
+       Punto_de_pas_11
+       Punto_de_pas_10
+       Punto_de_pas_12
